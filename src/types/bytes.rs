@@ -21,8 +21,12 @@ impl PyBytes {
     ///
     /// Panics if out of memory.
     pub fn new<'p>(py: Python<'p>, s: &[u8]) -> &'p PyBytes {
+        // create raw pointer for use ffi
         let ptr = s.as_ptr() as *const c_char;
+        // create ffi type for use 
         let len = s.len() as ffi::Py_ssize_t;
+        // call ffi func and register this returned  raw pointer in the gil return Self
+        // ,raw poninter to pyos type PyBytes ref.
         unsafe { py.from_owned_ptr(ffi::PyBytes_FromStringAndSize(ptr, len)) }
     }
 
@@ -41,6 +45,7 @@ impl PyBytes {
     ///         bytes.copy_from_slice(b"Hello Rust");
     ///         Ok(())
     ///     })?;
+    ///     // from pyo3 type object to ref??
     ///     let bytes: &[u8] = FromPyObject::extract(py_bytes)?;
     ///     assert_eq!(bytes, b"Hello Rust");
     ///     Ok(())
@@ -51,15 +56,20 @@ impl PyBytes {
         F: FnOnce(&mut [u8]) -> PyResult<()>,
     {
         unsafe {
+            // ffi func call, use c api ?,return raw pointer 
             let pyptr = ffi::PyBytes_FromStringAndSize(std::ptr::null(), len as ffi::Py_ssize_t);
             // Check for an allocation error and return it
+            // register raw pointer and return pyo3 type 
             let pypybytes: Py<PyBytes> = Py::from_owned_ptr_or_err(py, pyptr)?;
+            // ffi get string 
             let buffer = ffi::PyBytes_AsString(pyptr) as *mut u8;
             debug_assert!(!buffer.is_null());
+
             // Zero-initialise the uninitialised bytestring
             std::ptr::write_bytes(buffer, 0u8, len);
             // (Further) Initialise the bytestring in init
             // If init returns an Err, pypybytearray will automatically deallocate the buffer
+            // how understanding? 
             init(std::slice::from_raw_parts_mut(buffer, len)).map(|_| pypybytes.into_ref(py))
         }
     }
@@ -70,7 +80,7 @@ impl PyBytes {
     pub unsafe fn from_ptr(py: Python<'_>, ptr: *const u8, len: usize) -> &PyBytes {
         py.from_owned_ptr(ffi::PyBytes_FromStringAndSize(
             ptr as *const _,
-            len as isize,
+            len as isize, // for rust use?
         ))
     }
 
@@ -78,6 +88,7 @@ impl PyBytes {
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         unsafe {
+            // as_ptr to get pyo3 type to raw ptr 
             let buffer = ffi::PyBytes_AsString(self.as_ptr()) as *const u8;
             let length = ffi::PyBytes_Size(self.as_ptr()) as usize;
             debug_assert!(!buffer.is_null());
@@ -86,7 +97,9 @@ impl PyBytes {
     }
 }
 
+// trait impl for the pyo3 object 
 /// This is the same way [Vec] is indexed.
+// generic I 
 impl<I: SliceIndex<[u8]>> Index<I> for PyBytes {
     type Output = I::Output;
 
@@ -95,12 +108,15 @@ impl<I: SliceIndex<[u8]>> Index<I> for PyBytes {
     }
 }
 
+// trait impl for the bytesslic object converted to Pyobject  
 impl<'a> IntoPy<PyObject> for &'a [u8] {
     fn into_py(self, py: Python) -> PyObject {
         PyBytes::new(py, self).to_object(py)
     }
 }
 
+// trait impl for the bytesslic object extracted to ref 
+// impl<'a> IntoPy<PyObject> for &'a [u8] {
 impl<'a> FromPyObject<'a> for &'a [u8] {
     fn extract(obj: &'a PyAny) -> PyResult<Self> {
         Ok(<PyBytes as PyTryFrom>::try_from(obj)?.as_bytes())
@@ -117,7 +133,9 @@ mod test {
         let gil = Python::acquire_gil();
         let py = gil.python();
 
+        // create rust bytes object, eavl is frombytes_slict?? 
         let py_bytes = py.eval("b'Hello Python'", None, None).unwrap();
+        // extract bytes slict from this bytes object 
         let bytes: &[u8] = FromPyObject::extract(py_bytes).unwrap();
         assert_eq!(bytes, b"Hello Python");
     }
@@ -127,6 +145,7 @@ mod test {
         let gil = Python::acquire_gil();
         let py = gil.python();
         let bytes = PyBytes::new(py, b"Hello World");
+        //test index 
         assert_eq!(bytes[1], b'e');
     }
 
@@ -134,6 +153,7 @@ mod test {
     fn test_bytes_new_with() -> super::PyResult<()> {
         let gil = Python::acquire_gil();
         let py = gil.python();
+        // test new_with closure
         let py_bytes = PyBytes::new_with(py, 10, |b: &mut [u8]| {
             b.copy_from_slice(b"Hello Rust");
             Ok(())

@@ -211,11 +211,13 @@ extern "C" {
     #[cfg_attr(PyPy, link_name = "PyPyObject_LengthHint")]
     pub fn PyObject_LengthHint(o: *mut PyObject, arg1: Py_ssize_t) -> Py_ssize_t;
 
+    //     #[cfg(Py_3_9)]
     #[cfg(all(Py_3_9, not(PyPy)))]
     pub fn PyObject_CheckBuffer(obj: *mut PyObject) -> c_int;
 }
 
 #[cfg(not(any(Py_3_9, PyPy)))]
+// #[cfg(all(not(Py_LIMITED_API), not(Py_3_9)))]
 #[inline]
 pub unsafe fn PyObject_CheckBuffer(o: *mut PyObject) -> c_int {
     let tp_as_buffer = (*Py_TYPE(o)).tp_as_buffer;

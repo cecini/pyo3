@@ -1,4 +1,6 @@
 use crate::ffi::methodobject::PyMethodDef;
+#[cfg(Py_3_9)]
+use crate::object::PyTypeObject;
 use crate::ffi::moduleobject::PyModuleDef;
 use crate::ffi::object::PyObject;
 use crate::ffi::pyport::Py_ssize_t;
@@ -49,6 +51,8 @@ extern "C" {
         arg2: *const c_char,
         arg3: *const c_char,
     ) -> c_int;
+    #[cfg(Py_3_9)]
+    pub fn PyModule_AddType(module: *mut PyObject, ty: *mut PyTypeObject) -> c_int;
     pub fn PyModule_SetDocString(arg1: *mut PyObject, arg2: *const c_char) -> c_int;
     pub fn PyModule_AddFunctions(arg1: *mut PyObject, arg2: *mut PyMethodDef) -> c_int;
     pub fn PyModule_ExecDef(module: *mut PyObject, def: *mut PyModuleDef) -> c_int;

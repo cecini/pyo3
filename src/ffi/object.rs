@@ -29,6 +29,7 @@ pub struct PyObject {
 #[cfg(py_sys_config = "Py_TRACE_REFS")]
 #[cfg(not(PyPy))]
 pub const PyObject_HEAD_INIT: PyObject = PyObject {
+    // _ob_next: 0 as *mut PyObject,
     _ob_next: ::std::ptr::null_mut(),
     _ob_prev: ::std::ptr::null_mut(),
     ob_refcnt: 1,
@@ -69,6 +70,7 @@ pub struct PyVarObject {
 
 #[inline]
 pub unsafe fn Py_REFCNT(ob: *mut PyObject) -> Py_ssize_t {
+    // add this check ,compare with the rust-cpython
     if ob.is_null() {
         panic!();
     }
@@ -369,6 +371,7 @@ mod typeobject {
         pub ob_type: *mut PyTypeObject,
         #[cfg(PyPy)]
         pub ob_size: Py_ssize_t,
+        // all below apply 
         #[cfg(not(PyPy))]
         pub ob_base: object::PyVarObject,
         pub tp_name: *const c_char,
@@ -423,17 +426,20 @@ mod typeobject {
         pub tp_finalize: Option<object::destructor>,
         #[cfg(Py_3_8)]
         pub tp_vectorcall: Option<object::vectorcallfunc>,
+
+        #[cfg(all(Py_3_8, not(Py_3_9)))]
+        pub tp_print: Option<object::printfunc>,
         #[cfg(PyPy)]
         pub tp_pypy_flags: ::std::os::raw::c_long,
-        #[cfg(py_sys_config = "COUNT_ALLOCS")]
+        #[cfg(all(py_sys_config = "COUNT_ALLOCS", not(Py_3_9)))]
         pub tp_allocs: Py_ssize_t,
-        #[cfg(py_sys_config = "COUNT_ALLOCS")]
+        #[cfg(all(py_sys_config = "COUNT_ALLOCS", not(Py_3_9)))]
         pub tp_frees: Py_ssize_t,
-        #[cfg(py_sys_config = "COUNT_ALLOCS")]
+        #[cfg(all(py_sys_config = "COUNT_ALLOCS", not(Py_3_9)))]
         pub tp_maxalloc: Py_ssize_t,
-        #[cfg(py_sys_config = "COUNT_ALLOCS")]
+        #[cfg(all(py_sys_config = "COUNT_ALLOCS", not(Py_3_9)))]
         pub tp_prev: *mut PyTypeObject,
-        #[cfg(py_sys_config = "COUNT_ALLOCS")]
+        #[cfg(all(py_sys_config = "COUNT_ALLOCS", not(Py_3_9)))]
         pub tp_next: *mut PyTypeObject,
     }
 
@@ -494,6 +500,8 @@ mod typeobject {
                     tp_finalize: None,
                     #[cfg(Py_3_8)]
                     tp_vectorcall: None,
+                    #[cfg(all(Py_3_8, not(Py_3_9)))]
+                    tp_print: None,
                     $($tail)*
                 }
             }
@@ -529,6 +537,7 @@ mod typeobject {
     }
 
     #[cfg(py_sys_config = "COUNT_ALLOCS")]
+    //#[cfg(all(Py_3_8, not(Py_3_9), py_sys_config = "COUNT_ALLOCS"))]
     pub const PyTypeObject_INIT: PyTypeObject = type_object_init! {
         tp_allocs: 0,
         tp_frees: 0,
@@ -538,6 +547,44 @@ mod typeobject {
     };
 
     #[cfg(not(py_sys_config = "COUNT_ALLOCS"))]
+    //#[cfg(all(Py_3_8, not(Py_3_9), not(py_sys_config = "COUNT_ALLOCS")))]
+    pub const PyTypeObject_INIT: PyTypeObject = type_object_init!();
+
+
+//    #[cfg(all(Py_3_8, not(Py_3_9), py_sys_config = "COUNT_ALLOCS"))]
+//    pub const PyTypeObject_INIT: PyTypeObject = type_object_init! {
+//        tp_allocs: 0,
+//        tp_frees: 0,
+//        tp_maxalloc: 0,
+//        tp_prev: ptr::null_mut(),
+//        tp_next: ptr::null_mut(),
+//        tp_print: None,
+//        tp_as_async: 0 as *mut PyAsyncMethods,
+//        tp_vectorcall_offset: 0,
+//        tp_vectorcall: None,
+//        tp_finalize: None,
+//    };
+//    #[cfg(all(Py_3_8, not(Py_3_9), not(py_sys_config = "COUNT_ALLOCS")))]
+//    pub const PyTypeObject_INIT: PyTypeObject = type_object_init! {
+//        tp_print: None,
+//        tp_as_async: 0 as *mut PyAsyncMethods,
+//        tp_vectorcall_offset: 0,
+//        tp_vectorcall: None,
+//        tp_finalize: None,
+//    };
+
+
+
+    // py39 no COUNT_ALLOCS setting 
+   // #[cfg(Py_3_9)]
+    //pub const PyTypeObject_INIT: PyTypeObject = type_object_init! {
+    //    tp_as_async: 0 as *mut PyAsyncMethods,
+    //    tp_vectorcall_offset: 0,
+    //    tp_vectorcall: None,
+    //    tp_finalize: None,
+    // );
+    // };
+    #[cfg(Py_3_9)]
     pub const PyTypeObject_INIT: PyTypeObject = type_object_init!();
 
     #[repr(C)]
@@ -553,6 +600,8 @@ mod typeobject {
         pub ht_slots: *mut object::PyObject,
         pub ht_qualname: *mut object::PyObject,
         pub ht_cached_keys: *mut c_void,
+        #[cfg(Py_3_9)]
+        pub ht_module: *mut object::PyObject,
     }
 
     impl Default for PyHeapTypeObject {
@@ -612,6 +661,15 @@ extern "C" {
     pub fn PyType_FromSpecWithBases(arg1: *mut PyType_Spec, arg2: *mut PyObject) -> *mut PyObject;
 
     pub fn PyType_GetSlot(arg1: *mut PyTypeObject, arg2: c_int) -> *mut c_void;
+
+    #[cfg(Py_3_9)]
+    pub fn PyType_FromModuleAndSpec(arg1: *mut PyObject, arg2: *mut PyType_Spec, arg3: *mut PyObject) -> *mut PyObject;
+
+    #[cfg(Py_3_9)]
+    pub fn PyType_GetModule(arg1: *mut PyTypeObject) -> *mut PyObject;
+
+    #[cfg(Py_3_9)]
+    pub fn PyType_GetModuleState(arg1: *mut PyTypeObject) -> *mut c_void;
 }
 
 extern "C" {
@@ -745,6 +803,15 @@ extern "C" {
     pub fn PyObject_Dir(arg1: *mut PyObject) -> *mut PyObject;
     pub fn Py_ReprEnter(arg1: *mut PyObject) -> c_int;
     pub fn Py_ReprLeave(arg1: *mut PyObject);
+
+    #[cfg_attr(PyPy, link_name = "PyPy_SET_SIZE")]
+    // pub fn Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t)-> *mut c_void;
+    #[cfg(Py_3_9)]
+    pub fn Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t) -> c_void;
+   // pub fn Py_SET_REFCNT(arg1: *mut PyObject, arg2: Py_ssize_t)
+   // pub fn Py_SET_TYPE(arg1: *mut PyObject, arg2: PyTypeObject)
+
+
 }
 
 // Flag bits for printing:

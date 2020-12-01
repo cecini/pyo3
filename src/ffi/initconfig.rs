@@ -181,10 +181,14 @@ extern "C" {
         length: Py_ssize_t,
         items: *mut *mut wchar_t,
     ) -> PyStatus;
+
+    #[cfg(Py_3_9)]
+    pub fn Py_GetArgcArgv(argc: *mut c_int, argv: *mut *mut *mut wchar_t) -> c_void;
 }
 
 /* --- Helper functions --------------------------------------- */
 
+#[cfg(not(Py_3_9))]
 #[cfg_attr(windows, link(name = "pythonXY"))]
 extern "C" {
     pub fn Py_GetArgcArgv(argc: *mut c_int, argv: *mut *mut *mut wchar_t);

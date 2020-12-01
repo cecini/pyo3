@@ -3,6 +3,7 @@ use crate::ffi::object::*;
 use crate::ffi::pystate::PyThreadState;
 use std::os::raw::{c_char, c_int};
 
+#[cfg(not(Py_LIMITED_API))]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PyTryBlock {
@@ -10,7 +11,10 @@ pub struct PyTryBlock {
     pub b_handler: c_int,
     pub b_level: c_int,
 }
+#[cfg(Py_LIMITED_API)]
+pub enum PyFrameObject {}
 
+#[cfg(not(Py_LIMITED_API))]
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub struct PyFrameObject {
@@ -45,16 +49,19 @@ pub struct PyFrameObject {
     pub f_localsplus: [*mut PyObject; 1],         /* locals+stack, dynamically sized */
 }
 
+#[cfg(not(Py_LIMITED_API))]
 #[cfg_attr(windows, link(name = "pythonXY"))]
 extern "C" {
     pub static mut PyFrame_Type: PyTypeObject;
 }
 
+#[cfg(not(Py_LIMITED_API))]
 #[inline]
 pub unsafe fn PyFrame_Check(op: *mut PyObject) -> c_int {
     (Py_TYPE(op) == &mut PyFrame_Type) as c_int
 }
 
+#[cfg(not(Py_LIMITED_API))]
 extern "C" {
     #[cfg_attr(PyPy, link_name = "PyPyFrame_New")]
     pub fn PyFrame_New(
@@ -71,6 +78,16 @@ extern "C" {
     pub fn PyFrame_FastToLocalsWithError(f: *mut PyFrameObject) -> c_int;
     pub fn PyFrame_FastToLocals(f: *mut PyFrameObject);
 
+    #[cfg(not(Py_3_9))]
     pub fn PyFrame_ClearFreeList() -> c_int;
-    pub fn PyFrame_GetLineNumber(f: *mut PyFrameObject) -> c_int;
+//    pub fn PyFrame_GetLineNumber(f: *mut PyFrameObject) -> c_int;
 }
+
+#[cfg_attr(windows, link(name = "pythonXY"))]
+extern "C" {
+    pub fn PyFrame_GetLineNumber(f: *mut PyFrameObject) -> c_int;
+
+    #[cfg(Py_3_9)]
+    pub fn PyFrame_GetCode(frame: *mut PyFrameObject) -> *mut PyCodeObject;
+}
+

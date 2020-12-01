@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
+// if abi3 predicate true, then have this allow cfg atr
 #![cfg_attr(Py_LIMITED_API, allow(unused_imports))]
 #![cfg_attr(feature = "cargo-clippy", allow(clippy::inline_always))]
 
@@ -23,6 +24,8 @@ pub use self::frameobject::PyFrameObject;
 pub use self::funcobject::*;
 pub use self::genobject::*;
 pub use self::import::*;
+// only in the Py_3_8 true and any(LIM,PyPy) = false. 
+// only py_38, not LIm, not pypy  
 #[cfg(all(Py_3_8, not(any(PY_LIMITED_API, PyPy))))]
 pub use self::initconfig::*;
 pub use self::intrcheck::*;
@@ -62,6 +65,7 @@ pub use self::warnings::*;
 pub use self::weakrefobject::*;
 
 #[cfg(not(Py_LIMITED_API))]
+// if no abi3 ,then compilie here 
 pub use self::cpython::*;
 
 mod pyport;
@@ -72,6 +76,7 @@ mod pyport;
 // [cfg(not(Py_LIMITED_API))]
 // mod pytime; contains nothing of interest
 
+// py38 and no abi3 and no pypy 
 #[cfg(all(Py_3_8, not(any(PY_LIMITED_API, PyPy))))]
 mod initconfig;
 mod object;
@@ -161,12 +166,7 @@ mod pystrtod; // TODO supports PEP-384 only; needs adjustment for Python 3.3 and
 // Additional headers that are not exported by Python.h
 pub mod structmember; // TODO supports PEP-384 only; needs adjustment for Python 3.3 and 3.5
 
-#[cfg(not(Py_LIMITED_API))]
 pub mod frameobject;
-#[cfg(Py_LIMITED_API)]
-pub mod frameobject {
-    pub enum PyFrameObject {}
-}
 
 pub(crate) mod datetime;
 pub(crate) mod marshal;

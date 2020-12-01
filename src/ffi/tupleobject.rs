@@ -42,6 +42,7 @@ extern "C" {
     ) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyTuple_Pack")]
     pub fn PyTuple_Pack(arg1: Py_ssize_t, ...) -> *mut PyObject;
+    #[cfg(not(Py_3_9))]
     pub fn PyTuple_ClearFreeList() -> c_int;
 }
 

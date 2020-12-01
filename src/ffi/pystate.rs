@@ -1,4 +1,5 @@
 use crate::ffi::ceval::_PyFrameEvalFunction;
+#[cfg(Py_3_9)]
 use crate::ffi::frameobject::PyFrameObject;
 use crate::ffi::moduleobject::PyModuleDef;
 use crate::ffi::object::PyObject;
@@ -26,6 +27,9 @@ extern "C" {
     pub fn PyInterpreterState_Delete(arg1: *mut PyInterpreterState);
     //fn _PyState_AddModule(arg1: *mut PyObject,
     //                      arg2: *mut PyModuleDef) -> c_int;
+    #[cfg(Py_3_9)]
+    pub fn PyInterpreterState_Get() -> *mut PyInterpreterState;
+
     pub fn PyState_FindModule(arg1: *mut PyModuleDef) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyThreadState_New")]
     pub fn PyThreadState_New(arg1: *mut PyInterpreterState) -> *mut PyThreadState;
@@ -46,6 +50,12 @@ extern "C" {
     #[cfg_attr(PyPy, link_name = "PyPyThreadState_GetDict")]
     pub fn PyThreadState_GetDict() -> *mut PyObject;
     pub fn PyThreadState_SetAsyncExc(arg1: c_long, arg2: *mut PyObject) -> c_int;
+    #[cfg(Py_3_9)]
+    pub fn PyThreadState_GetInterpreter(tstate: *mut PyThreadState) -> *mut PyInterpreterState;
+    #[cfg(Py_3_9)]
+    pub fn PyThreadState_GetFrame(tstate: *mut PyThreadState) -> *mut PyFrameObject;
+    #[cfg(Py_3_9)]
+    pub fn PyThreadState_GetID(tstate: *mut PyThreadState) -> u64;
 }
 
 #[repr(C)]

@@ -30,11 +30,15 @@ pub type PyCFunctionWithKeywords = unsafe extern "C" fn(
     kwds: *mut PyObject,
 ) -> *mut PyObject;
 
+#[cfg(not(Py_3_9))]
+pub type PyNoArgsFunction = unsafe extern "C" fn(slf: *mut PyObject) -> *mut PyObject;
+
 extern "C" {
     #[cfg_attr(PyPy, link_name = "PyPyCFunction_GetFunction")]
     pub fn PyCFunction_GetFunction(f: *mut PyObject) -> Option<PyCFunction>;
     pub fn PyCFunction_GetSelf(f: *mut PyObject) -> *mut PyObject;
     pub fn PyCFunction_GetFlags(f: *mut PyObject) -> c_int;
+    #[deprecated(since = "0.5.2", note = "Deprecated since Python 3.9")]
     pub fn PyCFunction_Call(
         f: *mut PyObject,
         args: *mut PyObject,
@@ -63,6 +67,11 @@ impl Default for PyMethodDef {
         unsafe { mem::zeroed() }
     }
 }
+#[inline(always)]
+pub unsafe fn PyCFunction_New(ml: *mut PyMethodDef, slf: *mut PyObject) -> *mut PyObject {
+    PyCFunction_NewEx(ml, slf, ptr::null_mut())
+}
+
 
 extern "C" {
     #[cfg_attr(PyPy, link_name = "PyPyCFunction_NewEx")]
@@ -72,8 +81,15 @@ extern "C" {
         module: *mut PyObject,
     ) -> *mut PyObject;
 
-    #[cfg_attr(PyPy, link_name = "PyPyCFunction_NewEx")]
-    pub fn PyCFunction_New(ml: *mut PyMethodDef, slf: *mut PyObject) -> *mut PyObject;
+//    #[cfg_attr(PyPy, link_name = "PyPyCFunction_NewEx")]
+//   pub fn PyCFunction_New(ml: *mut PyMethodDef, slf: *mut PyObject) -> *mut PyObject;
+    #[cfg(Py_3_9)]
+    pub fn PyCMethod_New(
+        arg1: *mut PyMethodDef,
+        arg2: *mut PyObject,
+        arg3: *mut PyObject,
+        arg4: *mut PyTypeObject,
+    ) -> *mut PyObject;
 }
 
 /* Flag passed to newmethodobject */
@@ -101,6 +117,14 @@ be specified alone or with METH_KEYWORDS. */
 #[cfg(all(Py_3_7, not(Py_LIMITED_API)))]
 pub const METH_FASTCALL: c_int = 0x0080;
 
+// METH_STACKLESS: This bit is preserved for Stackless Python
+
+#[cfg(all(Py_3_9))]
+pub const METH_METHOD: c_int = 0x0200;
+
+#[cfg(not(Py_3_9))]
+#[cfg_attr(windows, link(name = "pythonXY"))]
 extern "C" {
     pub fn PyCFunction_ClearFreeList() -> c_int;
 }
+
