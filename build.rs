@@ -228,10 +228,12 @@ fn parse_header_defines(header_path: impl AsRef<Path>) -> Result<HashMap<String,
 }
 
 fn fix_config_map(mut config_map: HashMap<String, String>) -> HashMap<String, String> {
+    // for py37, not 38 39 
+    // now only 3.9test
     if let Some("1") = config_map.get("Py_DEBUG").as_ref().map(|s| s.as_str()) {
         config_map.insert("Py_REF_DEBUG".to_owned(), "1".to_owned());
         config_map.insert("Py_TRACE_REFS".to_owned(), "1".to_owned());
-        config_map.insert("COUNT_ALLOCS".to_owned(), "1".to_owned());
+       // config_map.insert("COUNT_ALLOCS".to_owned(), "1".to_owned());
     }
 
     config_map
