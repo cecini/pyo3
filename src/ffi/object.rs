@@ -77,9 +77,8 @@ pub unsafe fn Py_REFCNT(ob: *mut PyObject) -> Py_ssize_t {
     (*ob).ob_refcnt
 }
 #[inline]
-pub unsafe fn Py_SET_REFCNT(ob: *mut PyObject, refcnt: Py_ssize_t) -> c_void {
+pub unsafe fn Py_SET_REFCNT(ob: *mut PyObject, refcnt: Py_ssize_t)  {
     (*ob).ob_refcnt = refcnt;
-    c_void
 }
    // pub fn Py_SET_REFCNT(arg1: *mut PyObject, arg2: Py_ssize_t)
 
@@ -104,9 +103,8 @@ pub unsafe fn Py_SIZE(ob: *mut PyObject) -> Py_ssize_t {
     (*(ob as *mut PyVarObject)).ob_size
 }
 #[inline]
-pub unsafe fn Py_SET_SIZE(ob: *mut PyVarObject, size: Py_ssize_t) -> c_void {
+pub unsafe fn Py_SET_SIZE(ob: *mut PyVarObject, size: Py_ssize_t) {
     (*ob).ob_size = size;
-    c_void
 }
 
     // pub fn Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t)-> *mut c_void;
