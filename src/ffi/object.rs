@@ -76,6 +76,12 @@ pub unsafe fn Py_REFCNT(ob: *mut PyObject) -> Py_ssize_t {
     }
     (*ob).ob_refcnt
 }
+#[inline]
+pub unsafe fn Py_SET_REFCNT(ob: *mut PyObject, refcnt: Py_ssize_t) -> c_void {
+    (*ob).ob_refcnt = refcnt;
+    c_void
+}
+   // pub fn Py_SET_REFCNT(arg1: *mut PyObject, arg2: Py_ssize_t)
 
 #[cfg(PyPy)]
 pub unsafe fn _PyObject_NextNotImplemented(arg1: *mut PyObject) -> *mut PyObject {
@@ -97,6 +103,13 @@ pub unsafe fn Py_TYPE(ob: *mut PyObject) -> *mut PyTypeObject {
 pub unsafe fn Py_SIZE(ob: *mut PyObject) -> Py_ssize_t {
     (*(ob as *mut PyVarObject)).ob_size
 }
+#[inline]
+pub unsafe fn Py_SET_SIZE(ob: *mut PyVarObject, size: Py_ssize_t) -> c_void {
+    (*ob).ob_size = size;
+    c_void
+}
+
+    // pub fn Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t)-> *mut c_void;
 
 pub type unaryfunc = unsafe extern "C" fn(arg1: *mut PyObject) -> *mut PyObject;
 
@@ -806,10 +819,10 @@ extern "C" {
     pub fn Py_ReprEnter(arg1: *mut PyObject) -> c_int;
     pub fn Py_ReprLeave(arg1: *mut PyObject);
 
-    #[cfg_attr(PyPy, link_name = "PyPy_SET_SIZE")]
+   // #[cfg_attr(PyPy, link_name = "PyPy_SET_SIZE")]
     // pub fn Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t)-> *mut c_void;
-    #[cfg(Py_3_9)]
-    pub fn Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t) -> c_void;
+   // #[cfg(Py_3_9)]
+   // pub fn _Py_SET_SIZE(arg1: *mut PyVarObject, arg2: Py_ssize_t) -> c_void;
    // pub fn Py_SET_REFCNT(arg1: *mut PyObject, arg2: Py_ssize_t)
    // pub fn Py_SET_TYPE(arg1: *mut PyObject, arg2: PyTypeObject)
 
