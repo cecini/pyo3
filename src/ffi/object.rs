@@ -536,8 +536,9 @@ mod typeobject {
         }
     }
 
-    #[cfg(py_sys_config = "COUNT_ALLOCS")]
+   //  #[cfg(py_sys_config = "COUNT_ALLOCS")]
     //#[cfg(all(Py_3_8, not(Py_3_9), py_sys_config = "COUNT_ALLOCS"))]
+    #[cfg(all(py_sys_config = "COUNT_ALLOCS", not(Py_3_9)))]
     pub const PyTypeObject_INIT: PyTypeObject = type_object_init! {
         tp_allocs: 0,
         tp_frees: 0,
