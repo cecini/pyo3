@@ -16,13 +16,12 @@ pub unsafe fn PyObject_DelAttr(o: *mut PyObject, attr_name: *mut PyObject) -> c_
 }
 
 extern "C" {
+   // #[cfg(Py_3_9)]
+   // not pypy and  anytrue: not abi3 , or py_3_9
     #[cfg(all(
         not(PyPy),
         any(not(Py_LIMITED_API), Py_3_9) // Added to limited API in 3.9
     ))]
-   // #[cfg(Py_3_9)]
-   // not pypy and  anytrue: not abi3 , or py_3_9
-
     pub fn PyObject_CallNoArgs(func: *mut PyObject) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyObject_Call")]
     pub fn PyObject_Call(
@@ -136,7 +135,7 @@ extern "C" {
 
 // Note: Py 3.8 has PyIndex_Check as a function, prior to that it was only availabe as a macro
 // #[cfg(all(not(Py_LIMITED_API), not(Py_3_8)))
-#[cfg(all(not(Py_LIMITED_API), not(Py_3_8)))
+#[cfg(all(not(Py_LIMITED_API), not(Py_3_8)))]
 #[inline]
 #[cfg_attr(PyPy, link_name = "PyPyIndex_Check")]
 pub unsafe fn PyIndex_Check(o: *mut PyObject) -> c_int {

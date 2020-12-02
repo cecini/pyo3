@@ -1,6 +1,6 @@
 use crate::ffi::methodobject::PyMethodDef;
 #[cfg(Py_3_9)]
-use crate::object::PyTypeObject;
+use crate::ffi::object::PyTypeObject;
 use crate::ffi::moduleobject::PyModuleDef;
 use crate::ffi::object::PyObject;
 use crate::ffi::pyport::Py_ssize_t;

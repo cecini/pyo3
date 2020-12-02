@@ -584,8 +584,9 @@ mod typeobject {
     //    tp_finalize: None,
     // );
     // };
-    #[cfg(Py_3_9)]
-    pub const PyTypeObject_INIT: PyTypeObject = type_object_init!();
+
+    //#[cfg(Py_3_9)]
+    //pub const PyTypeObject_INIT: PyTypeObject = type_object_init!();
 
     #[repr(C)]
     #[derive(Clone)]

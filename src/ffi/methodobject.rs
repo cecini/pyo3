@@ -69,7 +69,7 @@ impl Default for PyMethodDef {
 }
 #[inline(always)]
 pub unsafe fn PyCFunction_New(ml: *mut PyMethodDef, slf: *mut PyObject) -> *mut PyObject {
-    PyCFunction_NewEx(ml, slf, ptr::null_mut())
+    PyCFunction_NewEx(ml, slf, ::std::ptr::null_mut())
 }
 
 
