@@ -739,6 +739,8 @@ extern "C" {
     #[cfg(not(Py_LIMITED_API))]
     #[cfg_attr(PyPy, link_name = "PyPyObject_Print")]
     pub fn PyObject_Print(o: *mut PyObject, fp: *mut ::libc::FILE, flags: c_int) -> c_int;
+
+    pub fn _PyObject_Dump(o: *mut PyObject);
     #[cfg_attr(PyPy, link_name = "PyPyObject_Repr")]
     pub fn PyObject_Repr(o: *mut PyObject) -> *mut PyObject;
     #[cfg_attr(PyPy, link_name = "PyPyObject_Str")]
