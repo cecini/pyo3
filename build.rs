@@ -227,13 +227,21 @@ fn parse_header_defines(header_path: impl AsRef<Path>) -> Result<HashMap<String,
     Ok(definitions)
 }
 
-fn fix_config_map(mut config_map: HashMap<String, String>) -> HashMap<String, String> {
-    // for py37, not 38 39 
-    // now only 3.9test
+fn fix_config_map(mut config_map: HashMap<String, String>, interpreter_config: &InterpreterConfig) -> HashMap<String, String> {
+    if interpreter_config.version.major == 3 && interpreter_config.version.minor.unwrap_or(0) > 7 {
+        if let Some("1") = config_map.get("Py_DEBUG").as_ref().map(|s| s.as_str()) {
+            config_map.insert("Py_REF_DEBUG".to_owned(), "1".to_owned());
+        }
+        if let Some("1") = config_map.get("Py_TRACE_REFS").as_ref().map(|s| s.as_str()) {
+            config_map.insert("Py_TRACE_REFS".to_owned(), "1".to_owned());
+        }
+        return config_map;
+
+    }
     if let Some("1") = config_map.get("Py_DEBUG").as_ref().map(|s| s.as_str()) {
         config_map.insert("Py_REF_DEBUG".to_owned(), "1".to_owned());
         config_map.insert("Py_TRACE_REFS".to_owned(), "1".to_owned());
-       // config_map.insert("COUNT_ALLOCS".to_owned(), "1".to_owned());
+        config_map.insert("COUNT_ALLOCS".to_owned(), "1".to_owned());
     }
 
     config_map
@@ -413,7 +421,7 @@ fn load_cross_compile_from_sysconfigdata(
         calcsize_pointer,
     };
 
-    Ok((interpreter_config, fix_config_map(config_map)))
+    Ok((interpreter_config, config_map))
 }
 
 fn load_cross_compile_from_headers(
@@ -445,7 +453,7 @@ fn load_cross_compile_from_headers(
         calcsize_pointer: None,
     };
 
-    Ok((interpreter_config, fix_config_map(config_map)))
+    Ok((interpreter_config, config_map))
 }
 
 fn load_cross_compile_info(
@@ -500,7 +508,7 @@ fn get_config_vars(python_path: &Path) -> Result<HashMap<String, String>> {
             memo
         });
 
-    Ok(fix_config_map(all_vars))
+    Ok(all_vars)
 }
 
 fn get_config_vars_windows(_: &Path) -> Result<HashMap<String, String>> {
@@ -528,7 +536,7 @@ fn get_config_vars_windows(_: &Path) -> Result<HashMap<String, String>> {
     // map.insert("Py_REF_DEBUG", "1");
     // map.insert("Py_TRACE_REFS", "1");
     // map.insert("COUNT_ALLOCS", 1");
-    Ok(fix_config_map(map))
+    Ok(map)
 }
 
 fn is_value(key: &str) -> bool {
@@ -856,6 +864,7 @@ fn main() -> Result<()> {
         find_interpreter_and_get_config()?
     };
 
+    config_map = fix_config_map(config_map, &interpreter_config);
     let flags = configure(&interpreter_config)?;
 
     // These flags need to be enabled manually for PyPy, because it does not expose
